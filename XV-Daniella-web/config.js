@@ -53,7 +53,7 @@ window.CONFIG = {
 
   // ---- Galería ----
   tituloGaleria: "Mis fotos",
-  galeria: ["assets/foto-5.jpg", "assets/foto-6.jpg", "assets/foto-8.jpg", "assets/foto-escalera.webp"],
+  galeria: ["assets/foto-salon.webp", "assets/foto-6.jpg", "assets/foto-8.jpg", "assets/foto-escalera.webp"],
 
   // ---- Código de vestimenta ----
   tituloDress: "Código de vestimenta",
