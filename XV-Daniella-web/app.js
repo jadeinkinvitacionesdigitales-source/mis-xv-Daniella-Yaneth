@@ -29,7 +29,8 @@
   // Invitado personalizado: index.html?n=Juan%20Pérez&c=2
   var params = new URLSearchParams(location.search);
   var guest = params.get("n");
-  var seats = parseInt(params.get("c"), 10);
+  var seats = Math.max(parseInt(params.get("c"), 10) || 0, 0);
+  var seatsText = seats + (seats === 1 ? " puesto reservado" : " puestos reservados");
 
   document.title = C.tituloPagina;
   document.querySelector('meta[name="description"]').content = C.descripcion;
@@ -37,7 +38,7 @@
   var guestHtml = guest
     ? '<div class="guest"><p class="guest-for">Esta invitación es especialmente para</p>' +
       '<p class="guest-name">' + esc(guest) + "</p>" +
-      (seats ? '<p class="guest-seats">Válida para ' + seats + " " + (seats === 1 ? "persona" : "personas") + "</p>" : "") +
+      (seats ? '<p class="guest-seats">' + seatsText + "</p>" : "") +
       "</div>"
     : "";
 
@@ -225,7 +226,7 @@
     error.textContent = problem;
     error.hidden = !problem;
     if (problem) return;
-    var text = (choice.value === "si" ? C.mensajeSi : C.mensajeNo).replace("{nombre}", name);
+    var text = (choice.value === "si" ? C.mensajeSi : C.mensajeNo).replace("{nombre}", name) + (seats ? " (" + seatsText + ")" : "");
     window.open("https://wa.me/" + C.whatsapp + "?text=" + encodeURIComponent(text), "_blank");
   });
 
