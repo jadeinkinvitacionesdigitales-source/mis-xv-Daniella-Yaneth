@@ -9,6 +9,10 @@ window.CONFIG = {
   tituloPagina: "Mis XV años · Daniella Yaneth Cedeño Elizondro",
   descripcion: "Invitación a los XV años de Daniella Yaneth Cedeño Elizondro — 19 de diciembre de 2026, Hotel Sheraton.",
 
+  // ---- Panel de enlaces (panel.html) ----
+  linkSitio: "https://jadeinkinvitacionesdigitales-source.github.io/mis-xv-Daniella-Yaneth/XV-Daniella-web/",   // dirección de la invitación publicada
+  mensajeEnlace: "Hola, {nombre}. Te invito a mis XV años. Esta es tu invitación personalizada:",
+
   // ---- Portada ----
   encabezado: "Mis XV años",
   nombre: "Daniella Yaneth Cedeño Elizondro",

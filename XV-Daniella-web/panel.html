@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex">
+  <title>Panel de enlaces</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Great+Vibes&display=swap">
+  <link rel="stylesheet" href="styles.css?v=59">
+  <style>
+    .panel-form { margin-top: 1.25rem; display: grid; gap: .8rem; justify-items: center; }
+    .panel-result { margin-top: 1.25rem; padding: 1rem; border: 1px solid var(--line); border-radius: .5rem; }
+    .panel-result[hidden], .panel-list[hidden] { display: none; }
+    .panel-link { margin: .3rem 0 .8rem; font-size: 1rem; line-height: 1.35; overflow-wrap: anywhere; color: var(--ink); }
+    .panel-actions { display: grid; grid-template-columns: 1fr 1fr; gap: .5rem; }
+    .panel-actions .btn { min-width: 0; padding: .6rem .5rem; font-size: .7rem; letter-spacing: .12em; }
+    .btn.light { background: none; color: var(--wine); }
+    .panel-list { padding-top: 0; text-align: left; }
+    .panel-list .title { text-align: center; }
+    .panel-total { margin-bottom: 1rem; text-align: center; font-size: 1.1rem; color: var(--gold); font-style: italic; }
+    .panel-item { padding: .9rem 0; border-top: 1px solid var(--line); }
+    .panel-name { font-size: 1.2rem; font-weight: 600; color: var(--wine); }
+    .panel-seats { font-size: 1.05rem; }
+    .panel-item .panel-actions { margin-top: .5rem; grid-template-columns: 1fr 1fr auto; }
+    .panel-remove { padding: 0 .6rem; font-size: 1rem; color: var(--wine); text-decoration: underline; }
+    .panel-note { margin-top: 1rem; text-align: center; font-size: 1rem; font-style: italic; }
+  </style>
+</head>
+<body>
+  <main class="visible">
+    <section class="block">
+      <h1 class="title">Panel de enlaces</h1>
+      <p class="script-title" id="panelName"></p>
+      <form class="panel-form" id="linkForm" novalidate>
+        <label class="rsvp-label" for="guestName">Nombre del invitado</label>
+        <input class="rsvp-input" id="guestName" autocomplete="off" placeholder="Familia Pérez">
+        <label class="rsvp-label" for="guestSeats">Cantidad de puestos</label>
+        <input class="rsvp-input" id="guestSeats" type="number" inputmode="numeric" min="1" max="50" value="2">
+        <p class="rsvp-error" id="linkError" role="alert" hidden></p>
+        <button class="btn" type="submit">Crear enlace</button>
+      </form>
+      <div class="panel-result" id="result" hidden>
+        <p class="rsvp-label">Enlace listo</p>
+        <p class="panel-link" id="resultLink"></p>
+        <div class="panel-actions">
+          <button class="btn" type="button" id="resultCopy">Copiar</button>
+          <a class="btn light" id="resultSend" target="_blank" rel="noopener">WhatsApp</a>
+        </div>
+      </div>
+    </section>
+    <section class="block panel-list" id="list" hidden>
+      <h2 class="title">Enlaces creados</h2>
+      <p class="panel-total" id="total"></p>
+      <div id="items"></div>
+      <p class="panel-note">Esta lista se guarda solo en este celular o computadora.</p>
+    </section>
+  </main>
+  <script src="config.js?v=59"></script>
+  <script>
+    (function () {
+      var C = window.CONFIG;
+      var KEY = "panel-enlaces";
+      var el = function (id) { return document.getElementById(id); };
+      var plural = function (n) { return n + (n === 1 ? " puesto" : " puestos"); };
+
+      el("panelName").textContent = C.nombreCorto;
+
+      var load = function () {
+        try { return JSON.parse(localStorage.getItem(KEY)) || []; } catch (e) { return []; }
+      };
+      var store = function () {
+        try { localStorage.setItem(KEY, JSON.stringify(saved)); } catch (e) {}
+      };
+      var saved = load();
+
+      var linkFor = function (g) {
+        return C.linkSitio + "?n=" + encodeURIComponent(g.nombre) + "&c=" + g.puestos;
+      };
+      var sendFor = function (g) {
+        return "https://wa.me/?text=" + encodeURIComponent(C.mensajeEnlace.replace("{nombre}", g.nombre) + "\n" + linkFor(g));
+      };
+      var copy = function (button, g) {
+        var done = function () {
+          var label = button.textContent;
+          button.textContent = "Copiado";
+          setTimeout(function () { button.textContent = label; }, 1500);
+        };
+        var fallback = function () {
+          var area = document.createElement("textarea");
+          area.value = linkFor(g);
+          document.body.appendChild(area);
+          area.select();
+          document.execCommand("copy");
+          area.remove();
+          done();
+        };
+        if (navigator.clipboard) navigator.clipboard.writeText(linkFor(g)).then(done, fallback);
+        else fallback();
+      };
+
+      var render = function () {
+        var box = el("items");
+        box.textContent = "";
+        el("list").hidden = !saved.length;
+        el("total").textContent = saved.length + (saved.length === 1 ? " invitado · " : " invitados · ") +
+          plural(saved.reduce(function (sum, g) { return sum + g.puestos; }, 0));
+        saved.forEach(function (g, i) {
+          var item = document.createElement("div");
+          item.className = "panel-item";
+          var name = document.createElement("p");
+          name.className = "panel-name";
+          name.textContent = g.nombre;
+          var seats = document.createElement("p");
+          seats.className = "panel-seats";
+          seats.textContent = plural(g.puestos);
+          var actions = document.createElement("div");
+          actions.className = "panel-actions";
+          var copyBtn = document.createElement("button");
+          copyBtn.type = "button";
+          copyBtn.className = "btn";
+          copyBtn.textContent = "Copiar";
+          copyBtn.addEventListener("click", function () { copy(copyBtn, g); });
+          var send = document.createElement("a");
+          send.className = "btn light";
+          send.textContent = "WhatsApp";
+          send.href = sendFor(g);
+          send.target = "_blank";
+          send.rel = "noopener";
+          var remove = document.createElement("button");
+          remove.type = "button";
+          remove.className = "panel-remove";
+          remove.textContent = "Quitar";
+          remove.addEventListener("click", function () {
+            saved.splice(i, 1);
+            store();
+            render();
+          });
+          actions.append(copyBtn, send, remove);
+          item.append(name, seats, actions);
+          box.appendChild(item);
+        });
+      };
+
+      var current = null;
+      el("resultCopy").addEventListener("click", function () { copy(this, current); });
+
+      el("linkForm").addEventListener("submit", function (e) {
+        e.preventDefault();
+        var nombre = el("guestName").value.trim();
+        var puestos = parseInt(el("guestSeats").value, 10);
+        var problem = !nombre ? "Escribe el nombre del invitado." : !(puestos >= 1 && puestos <= 50) ? "Escribe una cantidad de puestos entre 1 y 50." : "";
+        el("linkError").textContent = problem;
+        el("linkError").hidden = !problem;
+        if (problem) return;
+        current = { nombre: nombre, puestos: puestos };
+        saved = saved.filter(function (g) { return g.nombre !== nombre; });
+        saved.unshift(current);
+        store();
+        render();
+        el("resultLink").textContent = linkFor(current);
+        el("resultSend").href = sendFor(current);
+        el("result").hidden = false;
+        el("guestName").value = "";
+        el("guestName").focus();
+      });
+
+      render();
+    })();
+  </script>
+</body>
+</html>
